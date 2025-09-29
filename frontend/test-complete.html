@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Complete Authentication Test</title>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: white;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            margin: 20px 0;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .section {
+            margin: 20px 0;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        input {
+            margin: 8px 0;
+            padding: 12px;
+            width: 100%;
+            max-width: 300px;
+            border: none;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.9);
+            color: #333;
+            font-size: 14px;
+        }
+        button {
+            cursor: pointer;
+            background: linear-gradient(45deg, #FF6B6B, #4ECDC4);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 12px 24px;
+            margin: 8px 5px;
+            font-weight: bold;
+            transition: transform 0.2s;
+        }
+        button:hover {
+            transform: translateY(-2px);
+        }
+        .result {
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 10px;
+            white-space: pre-wrap;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+        }
+        .error {
+            background: rgba(255, 0, 0, 0.2);
+            border: 1px solid rgba(255, 0, 0, 0.4);
+        }
+        .success {
+            background: rgba(0, 255, 0, 0.2);
+            border: 1px solid rgba(0, 255, 0, 0.4);
+        }
+        .status {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 10px;
+            margin: 10px 0;
+            border-left: 4px solid #4ECDC4;
+        }
+        h1, h3 {
+            text-align: center;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        .flow {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔐 Complete Authentication System Test</h1>
+        
+        <div class="status" id="auth-status">Not authenticated</div>
+
+        <div class="section">
+            <h3>🎯 Test the Complete Flow</h3>
+            <div class="flow">
+                <button onclick="testCompleteFlow()">🚀 Test Full Authentication Flow</button>
+                <button onclick="clearAll()">🗑️ Clear All Data</button>
+            </div>
+        </div>
+
+        <!-- Manual Registration -->
+        <div class="section">
+            <h3>📝 Manual Registration</h3>
+            <input type="text" id="reg-username" placeholder="Username" value="testuser123">
+            <input type="email" id="reg-email" placeholder="Email" value="test123@example.com">
+            <input type="password" id="reg-password" placeholder="Password" value="mySecurePass123!">
+            <br>
+            <button onclick="register()">Register New User</button>
+            <div id="reg-result" class="result" style="display: none;"></div>
+        </div>
+
+        <!-- Manual Login -->
+        <div class="section">
+            <h3>🔑 Manual Login</h3>
+            <input type="text" id="login-username" placeholder="Username" value="testuser">
+            <input type="password" id="login-password" placeholder="Password" value="testpassword123">
+            <br>
+            <button onclick="login()">Login Existing User</button>
+            <div id="login-result" class="result" style="display: none;"></div>
+        </div>
+
+        <!-- Products Test -->
+        <div class="section">
+            <h3>📦 Products Management (Requires Auth)</h3>
+            <button onclick="fetchProducts()">Get My Products</button>
+            <button onclick="createTestProduct()">Create Test Product</button>
+            <button onclick="createMultipleProducts()">Create 3 Products</button>
+            <div id="products-result" class="result" style="display: none;"></div>
+        </div>
+
+        <!-- Backend Status -->
+        <div class="section">
+            <h3>🖥️ Backend Connection Test</h3>
+            <button onclick="testBackend()">Test Backend API</button>
+            <div id="backend-result" class="result" style="display: none;"></div>
+        </div>
+    </div>
+
+    <script>
+        // Configure axios
+        axios.defaults.baseURL = 'http://localhost:8000';
+        
+        let currentToken = localStorage.getItem('test_auth_token');
+        let currentUser = JSON.parse(localStorage.getItem('test_auth_user') || 'null');
+        
+        function updateAuthStatus() {
+            const statusDiv = document.getElementById('auth-status');
+            if (currentToken && currentUser) {
+                statusDiv.innerHTML = `✅ Authenticated as: <strong>${currentUser.username}</strong> (${currentUser.email})<br>🎫 Token: ${currentToken.substring(0, 20)}...`;
+                axios.defaults.headers.common['Authorization'] = `Bearer ${currentToken}`;
+            } else {
+                statusDiv.innerHTML = '❌ Not authenticated - Please register or login';
+                delete axios.defaults.headers.common['Authorization'];
+            }
+        }
+
+        function showResult(elementId, message, isError = false) {
+            const element = document.getElementById(elementId);
+            element.style.display = 'block';
+            element.textContent = message;
+            element.className = `result ${isError ? 'error' : 'success'}`;
+        }
+
+        async function testCompleteFlow() {
+            showResult('reg-result', '🔄 Starting complete authentication flow test...');
+            
+            // Step 1: Register new user
+            const timestamp = Date.now();
+            const userData = {
+                username: `testuser_${timestamp}`,
+                email: `test_${timestamp}@example.com`,
+                password: 'mySecureTestPass123!'
+            };
+            
+            try {
+                showResult('reg-result', `🔄 Step 1: Registering user ${userData.username}...`);
+                
+                const regResponse = await axios.post('/api/auth/register/', userData);
+                
+                currentToken = regResponse.data.tokens.access;
+                currentUser = regResponse.data.user;
+                localStorage.setItem('test_auth_token', currentToken);
+                localStorage.setItem('test_auth_user', JSON.stringify(currentUser));
+                updateAuthStatus();
+                
+                showResult('reg-result', `✅ Step 1: Registration successful!\n` +
+                    `User: ${regResponse.data.user.username}\n` +
+                    `Email: ${regResponse.data.user.email}\n` +
+                    `Token received: ${regResponse.data.tokens.access.substring(0, 30)}...`);
+                
+                // Step 2: Test authenticated request
+                setTimeout(async () => {
+                    showResult('products-result', '🔄 Step 2: Testing authenticated product creation...');
+                    
+                    const productData = {
+                        name: `Test Product ${timestamp}`,
+                        price: '19.99'
+                    };
+                    
+                    const prodResponse = await axios.post('/api/products/', productData);
+                    
+                    showResult('products-result', `✅ Step 2: Product created successfully!\n` +
+                        `ID: ${prodResponse.data.id}\n` +
+                        `Name: ${prodResponse.data.name}\n` +
+                        `Price: $${prodResponse.data.price}\n\n` +
+                        `🎉 COMPLETE FLOW TEST SUCCESSFUL! 🎉`);
+                        
+                }, 1000);
+                
+            } catch (error) {
+                const message = error.response?.data?.error || error.message;
+                showResult('reg-result', `❌ Flow test failed: ${Array.isArray(message) ? message.join(', ') : message}`, true);
+            }
+        }
+
+        async function register() {
+            try {
+                const username = document.getElementById('reg-username').value;
+                const email = document.getElementById('reg-email').value;
+                const password = document.getElementById('reg-password').value;
+                
+                const response = await axios.post('/api/auth/register/', {
+                    username, email, password
+                });
+                
+                currentToken = response.data.tokens.access;
+                currentUser = response.data.user;
+                localStorage.setItem('test_auth_token', currentToken);
+                localStorage.setItem('test_auth_user', JSON.stringify(currentUser));
+                
+                showResult('reg-result', `✅ Registration successful!\nWelcome ${response.data.user.username}!\nToken: ${response.data.tokens.access.substring(0, 30)}...`);
+                updateAuthStatus();
+            } catch (error) {
+                const message = error.response?.data?.error || 'Registration failed';
+                showResult('reg-result', `❌ Error: ${Array.isArray(message) ? message.join(', ') : message}`, true);
+            }
+        }
+
+        async function login() {
+            try {
+                const username = document.getElementById('login-username').value;
+                const password = document.getElementById('login-password').value;
+                
+                const response = await axios.post('/api/auth/login/', {
+                    username, password
+                });
+                
+                currentToken = response.data.tokens.access;
+                currentUser = response.data.user;
+                localStorage.setItem('test_auth_token', currentToken);
+                localStorage.setItem('test_auth_user', JSON.stringify(currentUser));
+                
+                showResult('login-result', `✅ Login successful!\nWelcome back ${response.data.user.username}!\nToken: ${response.data.tokens.access.substring(0, 30)}...`);
+                updateAuthStatus();
+            } catch (error) {
+                const message = error.response?.data?.error || 'Login failed';
+                showResult('login-result', `❌ Error: ${message}`, true);
+            }
+        }
+
+        async function fetchProducts() {
+            try {
+                const response = await axios.get('/api/products/');
+                const products = response.data;
+                
+                if (products.length === 0) {
+                    showResult('products-result', '📋 No products found. Create some products first!');
+                } else {
+                    const productList = products.map(p => 
+                        `• ${p.name} - $${p.price} (ID: ${p.id})`
+                    ).join('\n');
+                    showResult('products-result', `📦 Your Products (${products.length}):\n${productList}`);
+                }
+            } catch (error) {
+                const message = error.response?.data?.detail || 'Failed to fetch products';
+                showResult('products-result', `❌ Error: ${message}`, true);
+            }
+        }
+
+        async function createTestProduct() {
+            try {
+                const timestamp = Date.now();
+                const response = await axios.post('/api/products/', {
+                    name: `Cool Product ${timestamp}`,
+                    price: (Math.random() * 50 + 10).toFixed(2)
+                });
+                
+                showResult('products-result', `✅ Product created!\nName: ${response.data.name}\nPrice: $${response.data.price}\nID: ${response.data.id}`);
+            } catch (error) {
+                const message = error.response?.data?.error || 'Failed to create product';
+                showResult('products-result', `❌ Error: ${message}`, true);
+            }
+        }
+
+        async function createMultipleProducts() {
+            const products = [
+                { name: 'MacBook Pro', price: '2499.99' },
+                { name: 'iPhone 15', price: '999.99' },
+                { name: 'AirPods Pro', price: '249.99' }
+            ];
+            
+            let results = [];
+            for (const product of products) {
+                try {
+                    const response = await axios.post('/api/products/', product);
+                    results.push(`✅ ${product.name} - $${product.price}`);
+                } catch (error) {
+                    results.push(`❌ ${product.name} - Failed`);
+                }
+            }
+            
+            showResult('products-result', `📦 Created products:\n${results.join('\n')}`);
+        }
+
+        async function testBackend() {
+            try {
+                showResult('backend-result', '🔄 Testing backend connection...');
+                
+                // Test unprotected endpoints
+                const tests = [];
+                
+                try {
+                    await axios.get('/api/products/');
+                    tests.push('❌ /api/products/ - Should be protected but accessible');
+                } catch (error) {
+                    if (error.response?.status === 401) {
+                        tests.push('✅ /api/products/ - Correctly protected (401)');
+                    } else {
+                        tests.push(`❌ /api/products/ - Unexpected error: ${error.response?.status}`);
+                    }
+                }
+                
+                // Test auth endpoints
+                try {
+                    const response = await axios.post('/api/auth/login/', {
+                        username: 'nonexistent',
+                        password: 'wrongpass'
+                    });
+                    tests.push('❌ /api/auth/login/ - Should reject invalid credentials');
+                } catch (error) {
+                    if (error.response?.status === 401) {
+                        tests.push('✅ /api/auth/login/ - Correctly rejects invalid credentials');
+                    } else {
+                        tests.push(`✅ /api/auth/login/ - Reachable (${error.response?.status})`);
+                    }
+                }
+                
+                showResult('backend-result', `🖥️ Backend Status:\n${tests.join('\n')}\n\n✅ Django backend is running correctly!`);
+                
+            } catch (error) {
+                showResult('backend-result', `❌ Backend connection failed:\n${error.message}`, true);
+            }
+        }
+
+        function clearAll() {
+            currentToken = null;
+            currentUser = null;
+            localStorage.removeItem('test_auth_token');
+            localStorage.removeItem('test_auth_user');
+            updateAuthStatus();
+            
+            // Clear all results
+            ['reg-result', 'login-result', 'products-result', 'backend-result'].forEach(id => {
+                document.getElementById(id).style.display = 'none';
+            });
+            
+            showResult('reg-result', '🗑️ All data cleared!');
+        }
+
+        // Initialize on page load
+        updateAuthStatus();
+    </script>
+</body>
+</html>

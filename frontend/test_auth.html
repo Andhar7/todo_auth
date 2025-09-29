@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auth Test</title>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        input, button {
+            margin: 5px 0;
+            padding: 8px;
+            width: 200px;
+        }
+        button {
+            cursor: pointer;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            width: auto;
+            padding: 8px 15px;
+        }
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 3px;
+            background: #f8f9fa;
+            white-space: pre-wrap;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+        }
+    </style>
+</head>
+<body>
+    <h1>Authentication Test</h1>
+    
+    <!-- Registration -->
+    <div class="section">
+        <h3>Register</h3>
+        <input type="text" id="reg-username" placeholder="Username">
+        <input type="email" id="reg-email" placeholder="Email">
+        <input type="password" id="reg-password" placeholder="Password">
+        <button onclick="register()">Register</button>
+        <div id="reg-result" class="result" style="display: none;"></div>
+    </div>
+
+    <!-- Login -->
+    <div class="section">
+        <h3>Login</h3>
+        <input type="text" id="login-username" placeholder="Username">
+        <input type="password" id="login-password" placeholder="Password">
+        <button onclick="login()">Login</button>
+        <div id="login-result" class="result" style="display: none;"></div>
+    </div>
+
+    <!-- Products -->
+    <div class="section">
+        <h3>Products (Requires Authentication)</h3>
+        <button onclick="fetchProducts()">Get Products</button>
+        <button onclick="createProduct()">Create Product</button>
+        <div id="products-result" class="result" style="display: none;"></div>
+    </div>
+
+    <!-- Current Auth Status -->
+    <div class="section">
+        <h3>Current Status</h3>
+        <div id="auth-status">Not authenticated</div>
+        <button onclick="logout()">Logout</button>
+    </div>
+
+    <script>
+        // Configure axios
+        axios.defaults.baseURL = 'http://localhost:8000';
+        
+        let currentToken = localStorage.getItem('auth_token');
+        let currentUser = JSON.parse(localStorage.getItem('auth_user') || 'null');
+        
+        function updateAuthStatus() {
+            const statusDiv = document.getElementById('auth-status');
+            if (currentToken && currentUser) {
+                statusDiv.innerHTML = `Authenticated as: ${currentUser.username} (${currentUser.email})`;
+                axios.defaults.headers.common['Authorization'] = `Bearer ${currentToken}`;
+            } else {
+                statusDiv.innerHTML = 'Not authenticated';
+                delete axios.defaults.headers.common['Authorization'];
+            }
+        }
+
+        function showResult(elementId, message, isError = false) {
+            const element = document.getElementById(elementId);
+            element.style.display = 'block';
+            element.textContent = message;
+            element.className = `result ${isError ? 'error' : 'success'}`;
+        }
+
+        async function register() {
+            try {
+                const username = document.getElementById('reg-username').value;
+                const email = document.getElementById('reg-email').value;
+                const password = document.getElementById('reg-password').value;
+                
+                const response = await axios.post('/api/auth/register/', {
+                    username,
+                    email,
+                    password
+                });
+                
+                currentToken = response.data.tokens.access;
+                currentUser = response.data.user;
+                localStorage.setItem('auth_token', currentToken);
+                localStorage.setItem('auth_user', JSON.stringify(currentUser));
+                
+                showResult('reg-result', `Registration successful! Welcome ${response.data.user.username}`);
+                updateAuthStatus();
+            } catch (error) {
+                const message = error.response?.data?.error || 'Registration failed';
+                showResult('reg-result', `Error: ${Array.isArray(message) ? message.join(', ') : message}`, true);
+            }
+        }
+
+        async function login() {
+            try {
+                const username = document.getElementById('login-username').value;
+                const password = document.getElementById('login-password').value;
+                
+                const response = await axios.post('/api/auth/login/', {
+                    username,
+                    password
+                });
+                
+                currentToken = response.data.tokens.access;
+                currentUser = response.data.user;
+                localStorage.setItem('auth_token', currentToken);
+                localStorage.setItem('auth_user', JSON.stringify(currentUser));
+                
+                showResult('login-result', `Login successful! Welcome back ${response.data.user.username}`);
+                updateAuthStatus();
+            } catch (error) {
+                const message = error.response?.data?.error || 'Login failed';
+                showResult('login-result', `Error: ${message}`, true);
+            }
+        }
+
+        async function fetchProducts() {
+            try {
+                const response = await axios.get('/api/products/');
+                const products = response.data;
+                
+                if (products.length === 0) {
+                    showResult('products-result', 'No products found. Create some!');
+                } else {
+                    const productList = products.map(p => 
+                        `- ${p.name} ($${p.price}) [ID: ${p.id}]`
+                    ).join('\n');
+                    showResult('products-result', `Products:\n${productList}`);
+                }
+            } catch (error) {
+                const message = error.response?.data?.detail || 'Failed to fetch products';
+                showResult('products-result', `Error: ${message}`, true);
+            }
+        }
+
+        async function createProduct() {
+            try {
+                const name = prompt('Product name:');
+                const price = prompt('Product price:');
+                
+                if (!name || !price) return;
+                
+                const response = await axios.post('/api/products/', {
+                    name,
+                    price
+                });
+                
+                showResult('products-result', `Product created: ${response.data.name} ($${response.data.price})`);
+            } catch (error) {
+                const message = error.response?.data?.error || 'Failed to create product';
+                showResult('products-result', `Error: ${message}`, true);
+            }
+        }
+
+        function logout() {
+            currentToken = null;
+            currentUser = null;
+            localStorage.removeItem('auth_token');
+            localStorage.removeItem('auth_user');
+            updateAuthStatus();
+            
+            // Clear all results
+            ['reg-result', 'login-result', 'products-result'].forEach(id => {
+                document.getElementById(id).style.display = 'none';
+            });
+        }
+
+        // Initialize on page load
+        updateAuthStatus();
+    </script>
+</body>
+</html>
