@@ -1,9 +1,11 @@
 # 🚀 Todo Authentication App
 
-A full-stack Todo application with comprehensive authentication, email verification, and modern UI. Built with Django REST Framework backend and React frontend.
+A full-stack Todo application with comprehensive authentication, email verification, and modern UI. Built with Django REST Framework backend, React web frontend, and React Native mobile app.
 
 ![Django](https://img.shields.io/badge/Django-5.2.6-green.svg)
 ![React](https://img.shields.io/badge/React-18.3.1-blue.svg)
+![React Native](https://img.shields.io/badge/React%20Native-0.81.4-61dafb.svg)
+![Expo](https://img.shields.io/badge/Expo-54.0.10-000020.svg)
 ![JWT](https://img.shields.io/badge/JWT-Authentication-orange.svg)
 ![Email](https://img.shields.io/badge/Email-Verification-red.svg)
 
@@ -17,6 +19,7 @@ A full-stack Todo application with comprehensive authentication, email verificat
 - **Automatic Token Refresh** when tokens expire
 - **User Isolation** - each user sees only their data
 - **Password Validation** with Django's built-in validators
+- **Cross-platform Authentication** (Web & Mobile)
 
 ### 📧 Email System
 - **Professional Email Templates** (HTML + Plain Text)
@@ -26,14 +29,15 @@ A full-stack Todo application with comprehensive authentication, email verificat
 - **Console Backend** for development
 - **SMTP Ready** for production deployment
 
-### ⚛️ Frontend Experience
-- **Modern UI** with Chakra UI components
+### ⚛️ Frontend Experience (Web & Mobile)
+- **Modern UI** with Chakra UI (Web) and React Native Paper (Mobile)
 - **Responsive Design** that works on all devices
-- **Dark/Light Mode** support
+- **Dark/Light Mode** support (Web)
 - **Real-time State Management** with Zustand
 - **Error Handling** with user-friendly messages
 - **Loading States** and smooth transitions
 - **Form Validation** and user feedback
+- **Cross-platform Synchronization**
 
 ### 📋 Todo Management
 - **CRUD Operations** (Create, Read, Update, Delete)
@@ -41,6 +45,7 @@ A full-stack Todo application with comprehensive authentication, email verificat
 - **Real-time Updates** with optimistic UI
 - **Image Upload** support for todos
 - **Search and Filter** capabilities
+- **Synchronized Data** across web and mobile platforms
 
 ## 🛠️ Tech Stack
 
@@ -53,7 +58,7 @@ A full-stack Todo application with comprehensive authentication, email verificat
 - **Pillow 10.0.1** - Image processing
 - **PostgreSQL/SQLite** - Database (configurable)
 
-### Frontend
+### Frontend (Web)
 - **React 18.3.1** - UI library
 - **Vite 7.1.7** - Build tool and dev server
 - **Chakra UI 2.10.9** - Component library
@@ -62,6 +67,16 @@ A full-stack Todo application with comprehensive authentication, email verificat
 - **Axios 1.12.2** - HTTP client
 - **React Icons 5.2.1** - Icon library
 - **Framer Motion 6.5.1** - Animations
+
+### Mobile (React Native)
+- **React Native 0.81.4** - Mobile framework
+- **Expo 54.0.10** - Development platform
+- **React Navigation 6.x** - Navigation library
+- **React Native Paper** - Material Design components
+- **Zustand 4.5.7** - State management (shared)
+- **Axios 1.12.2** - HTTP client (shared)
+- **Expo SecureStore** - Secure token storage
+- **Expo Vector Icons** - Icon library
 
 ## 🚀 Quick Start
 
@@ -108,7 +123,7 @@ A full-stack Todo application with comprehensive authentication, email verificat
    python manage.py runserver
    ```
 
-3. **Frontend Setup**
+3. **Frontend Setup (Web)**
    ```bash
    cd ../frontend
    
@@ -119,10 +134,22 @@ A full-stack Todo application with comprehensive authentication, email verificat
    npm run dev
    ```
 
-4. **Access the Application**
-   - Frontend: http://localhost:5173
+4. **Mobile App Setup (React Native)**
+   ```bash
+   cd ../mobile
+   
+   # Install dependencies
+   npm install
+   
+   # Start Expo development server
+   npm start
+   ```
+
+5. **Access the Applications**
+   - Web Frontend: http://localhost:5173
    - Backend API: http://localhost:8000
    - Admin Panel: http://localhost:8000/admin
+   - Mobile App: Scan QR code with Expo Go app
 
 ## 🔧 Configuration
 
@@ -253,6 +280,46 @@ DATABASES = {
   }
 }
 ```
+
+## 📱 Mobile App
+
+### React Native with Expo
+
+The mobile app provides the full functionality of the web application in a native mobile experience:
+
+**Key Features:**
+- **Cross-platform** (iOS & Android) with single codebase
+- **Native UI** with React Native Paper components
+- **Secure authentication** with Expo SecureStore
+- **Shared state management** with web app (Zustand)
+- **Same API integration** as web frontend
+- **Offline-ready architecture** with token persistence
+
+**Quick Start:**
+```bash
+# Navigate to mobile directory
+cd mobile
+
+# Install dependencies
+npm install
+
+# Configure backend URL in src/utils/config.js
+# For Android emulator: http://10.0.2.2:8000
+# For physical device: http://YOUR_IP:8000
+
+# Start development server
+npm start
+
+# Scan QR code with Expo Go app
+```
+
+**Development Setup:**
+1. Install Expo CLI: `npm install -g @expo/cli`
+2. Install Expo Go app on your device
+3. Make sure Django backend is running on `0.0.0.0:8000`
+4. Update IP address in mobile config for physical devices
+
+For detailed mobile setup instructions, see [mobile/README.md](mobile/README.md).
 
 ## 🎯 User Flows
 
