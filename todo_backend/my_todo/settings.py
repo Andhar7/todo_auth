@@ -58,7 +58,7 @@ ROOT_URLCONF = 'my_todo.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [os.path.join(BASE_DIR, 'templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -186,3 +186,30 @@ EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'  # For developm
 
 DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='noreply@todoapp.com')
 FRONTEND_URL = config('FRONTEND_URL', default='http://localhost:5173')
+
+# CSRF Settings for development
+CSRF_TRUSTED_ORIGINS = [
+    'http://127.0.0.1:8000',
+    'http://localhost:8000',
+    'http://127.0.0.1:5173',
+    'http://localhost:5173',
+]
+
+# Additional CSRF settings for admin
+CSRF_COOKIE_AGE = 31449600  # 1 year
+CSRF_COOKIE_DOMAIN = None
+CSRF_COOKIE_HTTPONLY = False
+CSRF_COOKIE_NAME = 'csrftoken'
+CSRF_COOKIE_PATH = '/'
+CSRF_COOKIE_SAMESITE = 'Lax'
+CSRF_COOKIE_SECURE = False  # Set to True in production with HTTPS
+
+# Session settings
+SESSION_COOKIE_AGE = 1209600  # 2 weeks
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_NAME = 'sessionid'
+SESSION_COOKIE_PATH = '/'
+SESSION_COOKIE_SAMESITE = 'Lax'
+SESSION_COOKIE_SECURE = False  # Set to True in production with HTTPS
+SESSION_SAVE_EVERY_REQUEST = False
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False

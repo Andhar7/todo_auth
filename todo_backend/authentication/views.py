@@ -264,3 +264,48 @@ def user_profile(request):
             'email_verified_at': profile.email_verified_at
         }
     })
+
+
+# Admin Dashboard View
+from django.shortcuts import render
+from django.contrib.admin.views.decorators import staff_member_required
+
+
+@staff_member_required
+def admin_dashboard(request):
+    """Custom dashboard view with statistics"""
+    from products.models import Product
+    
+    # Gather statistics
+    stats = {
+        'total_users': User.objects.count(),
+        'verified_users': UserProfile.objects.filter(email_verified=True).count(),
+        'unverified_users': UserProfile.objects.filter(email_verified=False).count(),
+        'superusers': User.objects.filter(is_superuser=True).count(),
+        'staff_users': User.objects.filter(is_staff=True).count(),
+        'total_products': Product.objects.count(),
+        'active_tokens': EmailVerificationToken.objects.filter(
+            used=False, 
+            expires_at__gt=timezone.now()
+        ).count(),
+        'expired_tokens': EmailVerificationToken.objects.filter(
+            expires_at__lt=timezone.now()
+        ).count(),
+    }
+    
+    # Recent activity
+    recent_users = User.objects.order_by('-date_joined')[:5]
+    recent_products = Product.objects.select_related('owner').order_by('-created_at')[:5]
+    recent_tokens = EmailVerificationToken.objects.select_related('user').order_by('-created_at')[:5]
+    
+    context = {
+        'title': 'Dashboard',
+        'site_title': 'Todo Admin Dashboard',
+        'site_header': 'Todo App Administration',
+        'stats': stats,
+        'recent_users': recent_users,
+        'recent_products': recent_products,
+        'recent_tokens': recent_tokens,
+    }
+    
+    return render(request, 'admin/dashboard.html', context)

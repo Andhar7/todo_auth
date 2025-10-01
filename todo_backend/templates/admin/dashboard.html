@@ -1,0 +1,274 @@
+{% extends "admin/base_site.html" %}
+{% load admin_urls static admin_list %}
+
+{% block title %}Dashboard - {{ site_title|default:"Django site admin" }}{% endblock %}
+
+{% block branding %}
+<h1 id="site-name"><a href="{% url 'admin:index' %}">Todo App Administration</a></h1>
+{% endblock %}
+
+{% block nav-global %}{% endblock %}
+
+{% block content %}
+<div class="dashboard">
+    <style>
+        .dashboard-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .stat-card {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .stat-number {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #417690;
+            display: block;
+        }
+        .stat-label {
+            color: #666;
+            font-size: 0.9em;
+            margin-top: 8px;
+        }
+        .recent-section {
+            background: #2c3e50;
+            border: 1px solid #34495e;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            color: #ecf0f1;
+        }
+        .recent-section h2 {
+            color: #3498db;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+        }
+        .recent-list {
+            list-style: none;
+            padding: 0;
+        }
+        .recent-list li {
+            padding: 12px 16px;
+            margin: 8px 0;
+            border-bottom: 1px solid #34495e;
+            background: #34495e;
+            border-radius: 6px;
+            transition: background-color 0.3s ease;
+        }
+        .recent-list li:hover {
+            background: #4a5f7a;
+        }
+        .recent-list li:last-child {
+            border-bottom: none;
+        }
+        .recent-list li a {
+            color: #e8f4fd;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1.1em;
+        }
+        .recent-list li a:hover {
+            color: #ffffff;
+            text-decoration: underline;
+        }
+        .recent-list li small {
+            color: #bdc3c7;
+            display: block;
+            margin-top: 4px;
+            font-size: 0.9em;
+        }
+        .dashboard-actions {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+        .action-card {
+            background: #417690;
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            text-decoration: none;
+            transition: background-color 0.3s ease;
+        }
+        .action-card:hover {
+            background: #2c5f7a;
+            text-decoration: none;
+            color: white;
+        }
+        .button {
+            background: #3498db;
+            color: white;
+            padding: 8px 16px;
+            text-decoration: none;
+            border-radius: 4px;
+            display: inline-block;
+            font-size: 0.9em;
+            transition: background-color 0.3s ease;
+        }
+        .button:hover {
+            background: #2980b9;
+            color: white;
+            text-decoration: none;
+        }
+        
+        /* Status indicators with better contrast */
+        .status-valid {
+            color: #2ecc71 !important;
+            font-weight: bold;
+        }
+        .status-expired {
+            color: #e74c3c !important;
+            font-weight: bold;
+        }
+        .status-used {
+            color: #95a5a6 !important;
+            font-weight: bold;
+        }
+        
+        /* Dark mode enhancements */
+        @media (prefers-color-scheme: dark) {
+            .recent-section {
+                background: #1a252f;
+                border: 1px solid #2c3e50;
+            }
+            .recent-list li {
+                background: #2c3e50;
+                border-bottom: 1px solid #3a4a5c;
+            }
+            .recent-list li:hover {
+                background: #3a4a5c;
+            }
+        }
+    </style>
+
+    <h1>📊 Dashboard Overview</h1>
+    
+    <div class="dashboard-stats">
+        <div class="stat-card">
+            <span class="stat-number">{{ stats.total_users }}</span>
+            <div class="stat-label">Total Users</div>
+        </div>
+        <div class="stat-card">
+            <span class="stat-number">{{ stats.verified_users }}</span>
+            <div class="stat-label">Verified Users</div>
+        </div>
+        <div class="stat-card">
+            <span class="stat-number">{{ stats.unverified_users }}</span>
+            <div class="stat-label">Unverified Users</div>
+        </div>
+        <div class="stat-card">
+            <span class="stat-number">{{ stats.total_products }}</span>
+            <div class="stat-label">Total Products</div>
+        </div>
+        <div class="stat-card">
+            <span class="stat-number">{{ stats.active_tokens }}</span>
+            <div class="stat-label">Active Tokens</div>
+        </div>
+        <div class="stat-card">
+            <span class="stat-number">{{ stats.expired_tokens }}</span>
+            <div class="stat-label">Expired Tokens</div>
+        </div>
+        <div class="stat-card">
+            <span class="stat-number">{{ stats.superusers }}</span>
+            <div class="stat-label">Superusers</div>
+        </div>
+        <div class="stat-card">
+            <span class="stat-number">{{ stats.staff_users }}</span>
+            <div class="stat-label">Staff Users</div>
+        </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px;">
+        <div class="recent-section">
+            <h2>👥 Recent Users</h2>
+            <ul class="recent-list">
+                {% for user in recent_users %}
+                <li>
+                    <a href="{% url 'admin:auth_user_change' user.pk %}">{{ user.username }}</a>
+                    <small>({{ user.date_joined|date:"M d, Y H:i" }})</small>
+                </li>
+                {% empty %}
+                <li>No users found</li>
+                {% endfor %}
+            </ul>
+            <div style="text-align: center; margin-top: 15px;">
+                <a href="{% url 'admin:auth_user_changelist' %}" class="button">View All Users</a>
+            </div>
+        </div>
+
+        <div class="recent-section">
+            <h2>📦 Recent Products</h2>
+            <ul class="recent-list">
+                {% for product in recent_products %}
+                <li>
+                    <a href="{% url 'admin:products_product_change' product.pk %}">{{ product.name }}</a>
+                    <small>by {{ product.owner.username }} ({{ product.created_at|date:"M d, Y H:i" }})</small>
+                </li>
+                {% empty %}
+                <li>No products found</li>
+                {% endfor %}
+            </ul>
+            <div style="text-align: center; margin-top: 15px;">
+                <a href="{% url 'admin:products_product_changelist' %}" class="button">View All Products</a>
+            </div>
+        </div>
+
+        <div class="recent-section">
+            <h2>🔐 Recent Tokens</h2>
+            <ul class="recent-list">
+                {% for token in recent_tokens %}
+                <li>
+                    <a href="{% url 'admin:authentication_emailverificationtoken_change' token.pk %}">
+                        {{ token.user.username }}
+                    </a>
+                    <small>
+                        ({{ token.created_at|date:"M d, Y H:i" }}) - 
+                        {% if token.is_expired %}
+                            <span class="status-expired">Expired</span>
+                        {% elif token.used %}
+                            <span class="status-used">Used</span>
+                        {% else %}
+                            <span class="status-valid">Valid</span>
+                        {% endif %}
+                    </small>
+                </li>
+                {% empty %}
+                <li>No tokens found</li>
+                {% endfor %}
+            </ul>
+            <div style="text-align: center; margin-top: 15px;">
+                <a href="{% url 'admin:authentication_emailverificationtoken_changelist' %}" class="button">View All Tokens</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="dashboard-actions">
+        <a href="{% url 'admin:auth_user_add' %}" class="action-card">
+            <h3>➕ Add New User</h3>
+            <p>Create a new user account</p>
+        </a>
+        <a href="{% url 'admin:products_product_add' %}" class="action-card">
+            <h3>📦 Add New Product</h3>
+            <p>Add a product to the system</p>
+        </a>
+        <a href="{% url 'admin:authentication_userprofile_changelist' %}" class="action-card">
+            <h3>👤 User Profiles</h3>
+            <p>Manage user profiles and verification</p>
+        </a>
+        <a href="{% url 'admin:authentication_emailverificationtoken_changelist' %}?used=False&expires_at__gt={{ "now"|date:"Y-m-d H:i:s" }}" class="action-card">
+            <h3>🔐 Active Tokens</h3>
+            <p>View valid verification tokens</p>
+        </a>
+    </div>
+</div>
+{% endblock %}
